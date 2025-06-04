@@ -9,7 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { trpc } from '@/utils/trpc';
 import { useState, useEffect, useCallback } from 'react';
-import { Trash2, Edit, Plus, CheckCircle2, Circle } from 'lucide-react';
+import { Trash2, Edit, Plus, CheckCircle2, Circle, Sun, Moon } from 'lucide-react';
 import type { Todo, CreateTodoInput, UpdateTodoInput } from '../../server/src/schema';
 
 function App() {
@@ -18,6 +18,11 @@ function App() {
   const [isCreating, setIsCreating] = useState(false);
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
+  // Theme state
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => 
+    (localStorage.getItem('theme') as 'light' | 'dark') || 'light'
+  );
 
   // Form state for creating new todos
   const [newTodoForm, setNewTodoForm] = useState<CreateTodoInput>({
@@ -45,6 +50,19 @@ function App() {
   useEffect(() => {
     loadTodos();
   }, [loadTodos]);
+
+  // Theme effect
+  useEffect(() => {
+    const root = window.document.documentElement;
+    root.classList.remove('light', 'dark');
+    root.classList.add(theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  // Toggle theme function
+  const toggleTheme = () => {
+    setTheme((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
+  };
 
   const handleCreateTodo = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,12 +143,17 @@ function App() {
   const totalCount = todos.length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen bg-background text-foreground p-4">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">✅ My Todo List</h1>
-          <p className="text-gray-600">Stay organized and get things done!</p>
+          <div className="flex items-center justify-center gap-4 mb-4">
+            <h1 className="text-4xl font-bold mb-2">✅ My Todo List</h1>
+            <Button variant="ghost" size="icon" onClick={toggleTheme} className="ml-4">
+              {theme === 'light' ? <Sun className="h-6 w-6" /> : <Moon className="h-6 w-6" />}
+            </Button>
+          </div>
+          <p className="text-muted-foreground">Stay organized and get things done!</p>
           {totalCount > 0 && (
             <div className="mt-4 flex justify-center gap-4">
               <Badge variant="secondary" className="text-sm">
@@ -147,9 +170,9 @@ function App() {
         </div>
 
         {/* Create Todo Form */}
-        <Card className="mb-8 shadow-lg border-0 bg-white/80 backdrop-blur">
+        <Card className="mb-8 shadow-lg border-0 bg-card text-card-foreground backdrop-blur">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-xl text-gray-800">
+            <CardTitle className="flex items-center gap-2 text-xl">
               <Plus className="w-5 h-5" />
               Add New Todo
             </CardTitle>
@@ -189,11 +212,11 @@ function App() {
 
         {/* Todo List */}
         {todos.length === 0 ? (
-          <Card className="text-center py-12 shadow-lg border-0 bg-white/80 backdrop-blur">
+          <Card className="text-center py-12 shadow-lg border-0 bg-card text-card-foreground backdrop-blur">
             <CardContent>
               <div className="text-6xl mb-4">📝</div>
-              <h3 className="text-xl font-semibold text-gray-700 mb-2">No todos yet!</h3>
-              <p className="text-gray-500">Create your first todo above to get started.</p>
+              <h3 className="text-xl font-semibold mb-2">No todos yet!</h3>
+              <p className="text-muted-foreground">Create your first todo above to get started.</p>
             </CardContent>
           </Card>
         ) : (
@@ -203,8 +226,8 @@ function App() {
                 key={todo.id} 
                 className={`shadow-lg border-0 transition-all duration-200 hover:shadow-xl ${
                   todo.completed 
-                    ? 'bg-green-50/80 backdrop-blur border-l-4 border-l-green-500' 
-                    : 'bg-white/80 backdrop-blur border-l-4 border-l-blue-500'
+                    ? 'bg-card/80 backdrop-blur border-l-4 border-l-green-500' 
+                    : 'bg-card/80 backdrop-blur border-l-4 border-l-blue-500'
                 }`}
               >
                 <CardContent className="p-6">
@@ -227,18 +250,18 @@ function App() {
                     {/* Content */}
                     <div className="flex-1">
                       <h3 className={`text-lg font-semibold mb-2 ${
-                        todo.completed ? 'line-through text-gray-500' : 'text-gray-800'
+                        todo.completed ? 'line-through text-muted-foreground' : ''
                       }`}>
                         {todo.title}
                       </h3>
                       {todo.description && (
-                        <p className={`text-gray-600 mb-3 ${
+                        <p className={`text-muted-foreground mb-3 ${
                           todo.completed ? 'line-through opacity-75' : ''
                         }`}>
                           {todo.description}
                         </p>
                       )}
-                      <div className="flex items-center gap-4 text-sm text-gray-500">
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <span>Created: {todo.created_at.toLocaleDateString()}</span>
                         {todo.updated_at.getTime() !== todo.created_at.getTime() && (
                           <span>Updated: {todo.updated_at.toLocaleDateString()}</span>
